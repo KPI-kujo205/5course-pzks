@@ -1,4 +1,4 @@
-import { S, IN, TABLE } from '/src/table.js';
+import { S, IN, TABLE } from './src/table.js';
 
 const NODE_RADIUS = 40;
 const TOP_MARGIN = 70;

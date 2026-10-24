@@ -43,12 +43,12 @@
   </div>
   <div id="source" class="mono"></div>
   <ul id="errors"></ul>
-  <p class="hint" style="margin-top:32px"><a href="/automaton.html">Граф автомата →</a></p>
+  <p class="hint" style="margin-top:32px"><a href="./automaton.html">Граф автомата →</a></p>
 </main>
 
 <script type="module">
-import { analyze } from '/src/fsm.js';
-import { UNIT, EXAMPLE, GENERAL } from '/src/samples.js';
+import { analyze } from './src/fsm.js';
+import { UNIT, EXAMPLE, GENERAL } from './src/samples.js';
 
 const SAMPLES = [
   ...UNIT.map((expr, i) => ({ name: `Тест ${i + 1}`, expr })),
