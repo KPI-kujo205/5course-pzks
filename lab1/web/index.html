@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Аналізатор виразів</title>
+<style>
+  :root { --bg: #fafafa; --text: #1c1c1e; --muted: #8e8e93; --line: #e5e5ea; --err: #d70015; --errbg: #ffe5e8; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #131315; --text: #ececf0; --muted: #7d7d85; --line: #2a2a2f; --err: #ff6b7a; --errbg: #3a1d22; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, sans-serif; }
+  main { max-width: 720px; margin: 0 auto; padding: 56px 20px; }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  .row { display: flex; gap: 10px; }
+  input, select { font: inherit; color: var(--text); background: transparent; border: 1px solid var(--line);
+    border-radius: 8px; padding: 10px 12px; outline: none; }
+  input { flex: 1; min-width: 0; font-size: 17px; }
+  input:focus, select:focus { border-color: var(--muted); }
+  select { appearance: none; -webkit-appearance: none; width: 130px; font-size: 14px; color: var(--muted); cursor: pointer;
+    padding-right: 30px; background: no-repeat right 12px center / 10px
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238e8e93' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+  select:hover { border-color: var(--muted); }
+  :root { color-scheme: light dark; }
+  #source { margin: 28px 0 24px; font-size: 22px; white-space: pre-wrap; word-break: break-all; min-height: 34px; }
+  #source .err { background: var(--errbg); border-bottom: 2px solid var(--err); }
+  #source .hl { background: var(--err); color: #fff; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { display: flex; gap: 14px; padding: 9px 0; border-top: 1px solid var(--line); cursor: default; }
+  li:hover { color: var(--err); }
+  li .pos { color: var(--muted); min-width: 28px; text-align: right; font-size: 14px; padding-top: 1px; }
+  .ok, .hint { color: var(--muted); }
+  .hint a { color: inherit; text-decoration: none; }
+  .hint a:hover { color: var(--text); }
+</style>
+</head>
+<body>
+<main>
+  <div class="row">
+    <input id="input" class="mono" spellcheck="false" autocomplete="off" placeholder="Введіть вираз">
+    <select id="samples" aria-label="Приклади"></select>
+  </div>
+  <div id="source" class="mono"></div>
+  <ul id="errors"></ul>
+  <p class="hint" style="margin-top:32px"><a href="/automaton.html">Граф автомата →</a></p>
+</main>
+
+<script type="module">
+import { analyze } from '/src/fsm.js';
+import { UNIT, EXAMPLE, GENERAL } from '/src/samples.js';
+
+const SAMPLES = [
+  ...UNIT.map((expr, i) => ({ name: `Тест ${i + 1}`, expr })),
+  { name: 'Приклад', expr: EXAMPLE },
+  ...GENERAL.map((expr, i) => ({ name: `Загальний ${i + 1}`, expr })),
+];
+
+let result;
+
+$('input').addEventListener('input', update);
+$('samples').addEventListener('change', pickSample);
+fillSamples();
+$('input').value = EXAMPLE;
+update();
+
+function $(id) {
+  return document.getElementById(id);
+}
+
+function escapeHtml(text) {
+  return text.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+
+function fillSamples() {
+  const options = SAMPLES.map(({ name }, i) => `<option value="${i}">${name}</option>`);
+  $('samples').innerHTML = `<option value="">Приклади</option>${options.join('')}`;
+}
+
+function pickSample(event) {
+  const index = event.target.value;
+  event.target.value = '';
+  if (index === '') return;
+  $('input').value = SAMPLES[index].expr;
+  update();
+}
+
+function update() {
+  result = analyze($('input').value);
+  showErrors();
+  showSource();
+}
+
+function showErrors() {
+  const list = $('errors');
+  if (!$('input').value.trim()) list.innerHTML = '';
+  else if (result.errors.length === 0) list.innerHTML = '<li class="ok">Помилок немає</li>';
+  else list.innerHTML = result.errors.map(errorItem).join('');
+  list.querySelectorAll('li[data-i]').forEach(highlightSourceOnHover);
+}
+
+function errorItem(error, i) {
+  return `<li data-i="${i}"><span class="pos mono">${error.pos}</span><span>${escapeHtml(error.message)}</span></li>`;
+}
+
+function highlightSourceOnHover(item) {
+  item.onmouseenter = () => showSource(Number(item.dataset.i));
+  item.onmouseleave = () => showSource();
+}
+
+function showSource(highlighted = -1) {
+  const src = $('input').value;
+  const classes = underlineClasses({ src, highlighted });
+  let html = Array.from(src, (c, k) => `<span class="${classes[k]}">${c === ' ' ? '&nbsp;' : escapeHtml(c)}</span>`).join('');
+  const endError = result.errors.findIndex((e) => e.pos >= src.length);
+  if (endError !== -1) html += `<span class="err${endError === highlighted ? ' hl' : ''}">&nbsp;</span>`;
+  $('source').innerHTML = html;
+}
+
+function underlineClasses({ src, highlighted }) {
+  const classes = Array.from(src, () => '');
+  result.errors.forEach((error, i) => {
+    const tok = result.tokens.find((t) => t.pos === error.pos);
+    const end = error.pos + (tok ? tok.value.length : 1);
+    for (let k = error.pos; k < Math.min(end, src.length); k++) {
+      classes[k] = i === highlighted ? 'err hl' : classes[k] || 'err';
+    }
+  });
+  return classes;
+}
+</script>
+</body>
+</html>

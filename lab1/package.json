@@ -1,0 +1,11 @@
+{
+  "name": "lab1-expression-analyzer",
+  "version": "1.0.0",
+  "description": "Лексичний та синтаксичний (FSM) аналізатор арифметичних виразів",
+  "type": "module",
+  "scripts": {
+    "start": "node src/cli.js",
+    "web": "node serve.js",
+    "test": "node --test test/*.test.js"
+  }
+}

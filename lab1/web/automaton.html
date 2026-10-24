@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Граф автомата</title>
+<style>
+  :root { color-scheme: light dark; --bg: #fff; --text: #1c1c1e; --muted: #8e8e93; --edge: #2c2c2e;
+    --loop: #5b7fc0; --start: #5f9e4a; --err: #b8504f; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #131315; --text: #ececf0; --muted: #7d7d85; --edge: #cfcfd6; --loop: #7da2e8; --start: #7fc268; --err: #e0706e; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 32px 20px 56px; }
+  a { color: var(--muted); text-decoration: none; }
+  a:hover { color: var(--text); }
+  h1 { font-size: 20px; font-weight: 600; margin: 14px 0 20px; }
+  svg { width: 100%; height: auto; display: block; }
+  .node circle { fill: var(--bg); stroke: var(--text); stroke-width: 2; }
+  .node.err circle { stroke: var(--err); stroke-width: 1.5; }
+  .node.err text { fill: var(--err); }
+  .node text { fill: var(--text); font: 600 10px system-ui, sans-serif; text-anchor: middle; dominant-baseline: central; }
+  .edge { fill: none; stroke: var(--edge); stroke-width: 1.6; marker-end: url(#a-edge); }
+  .edge.start { stroke: var(--start); marker-end: url(#a-start); }
+  .edge.loop { stroke: var(--loop); marker-end: url(#a-loop); }
+  .edge.err { stroke: var(--err); marker-end: url(#a-err); stroke-width: 1.3; }
+  .lbl { font: 13px ui-monospace, "SF Mono", Menlo, monospace; text-anchor: middle; dominant-baseline: central; fill: var(--text); }
+  .lbl.err { fill: var(--err); }
+  .lbl.loop { fill: var(--loop); }
+  .lbl.start { fill: var(--start); }
+  .lblbg { fill: var(--bg); }
+  .legend { color: var(--muted); font-size: 14px; margin-top: 14px; line-height: 1.8; }
+  .legend i { display: inline-block; width: 22px; height: 3px; vertical-align: middle; margin-right: 6px; border-radius: 2px; }
+</style>
+</head>
+<body>
+<main>
+  <a href="/">← Аналізатор</a>
+  <h1>Граф скінченного автомата</h1>
+  <svg id="g" viewBox="-40 0 1040 800"></svg>
+  <div class="legend">
+    <div><i style="background:var(--start)"></i>переходи зі START
+      &nbsp; <i style="background:var(--edge)"></i>звичайні переходи
+      &nbsp; <i style="background:var(--loop)"></i>петля
+      &nbsp; <i style="background:var(--err)"></i>перехід у ERROR (помилка фіксується, далі — відновлення)</div>
+    <div>Подвійне коло — стани, у яких вираз можна завершити. <b>⏎</b> — кінець рядка.
+      <b>*</b> <code>()</code> допустимі лише після імені функції. Кома допустима лише всередині виклику функції.
+      Невідомий символ з будь-якого стану → ERROR, символ пропускається, стан не змінюється.</div>
+  </div>
+</main>
+
+<script type="module" src="/automaton.js"></script>
+</body>
+</html>
