@@ -32,10 +32,14 @@
   .lblbg { fill: var(--bg); }
   .legend { color: var(--muted); font-size: 14px; margin-top: 14px; line-height: 1.8; }
   .legend i { display: inline-block; width: 22px; height: 3px; vertical-align: middle; margin-right: 6px; border-radius: 2px; }
+  .labs { display: flex; gap: 16px; justify-content: flex-end; font-size: 14px; margin-bottom: 24px; }
+  .labs a { color: var(--muted); text-decoration: none; }
+  .labs a:hover, .labs a.current { color: var(--text); }
 </style>
 </head>
 <body>
 <main>
+  <nav class="labs"><a href="../lab1/" class="current">Лаб 1</a><a href="../lab2/">Лаб 2</a></nav>
   <a href="./">← Аналізатор</a>
   <h1>Граф скінченного автомата</h1>
   <svg id="g" viewBox="-40 0 1040 800"></svg>

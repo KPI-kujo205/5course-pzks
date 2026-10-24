@@ -1,0 +1,15 @@
+export const SAMPLES = [
+  { name: 'М1 · додавання', expr: 'a+b+c+d+e+f+g+h', simplify: false },
+  { name: 'М2 · віднімання', expr: 'a-b-c-d-e-f-g-h', simplify: false },
+  { name: 'М3 · ділення', expr: 'a/b/c/d/e/f/g/h', simplify: false },
+  { name: 'М4 · пріоритети', expr: 'a*(b-4) - 2*b*c - c*d - a*c*d/e/f/g - g-h-i-j', simplify: false },
+  { name: 'P1 · дужки з плюсом', expr: 'a+(b+c+d+(e+f)+g)+h', simplify: false },
+  { name: 'P2 · дужки з мінусом', expr: 'a-((b-c-d)-(e-f)-g)-h', simplify: false },
+  { name: 'E1 · ділення = 0.125', expr: '5040/8/7/6/5/4/3/2', simplify: false },
+  { name: 'E2 · віднімання = −35', expr: '10-9-8-7-6-5-4-3-2-1', simplify: false },
+  { name: 'E3 · дужки = 39', expr: '64-(32-16)-8-(4-2-1)', simplify: false },
+  { name: 'S1 · спрощення', expr: '-(-i)/1.0 + 0 - 0*k*h + 2 - 4.8/2 + 1*e/2', simplify: true },
+  { name: 'S2 · ділення на нуль', expr: 'a*2/0 + b/(b+b*0-1*b) - 1/(c*2*4.76*(1-2+1))', simplify: false },
+  { name: 'Складний · функція, індекс, степінь', expr: 'a*(b+c-d) - e/(f*g)/h + sin(x+y)*(p-q-r) - A[i+1] + 2^k*(m+n)', simplify: false },
+  { name: 'Приклад з умови', expr: 'a+b*c + k - x - d - e - f/g/h/q', simplify: false },
+];

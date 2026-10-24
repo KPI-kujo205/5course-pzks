@@ -1,0 +1,11 @@
+{
+  "name": "lab2-parallel-tree",
+  "version": "1.0.0",
+  "description": "Дерево паралельної форми арифметичного виразу (мінімальна висота, максимальна ширина)",
+  "type": "module",
+  "scripts": {
+    "start": "node src/cli.js",
+    "web": "node ../serve.js",
+    "test": "node --test test/*.test.js"
+  }
+}

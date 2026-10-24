@@ -1,0 +1,8 @@
+{
+  "name": "pzks-labs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "web": "node serve.js"
+  }
+}

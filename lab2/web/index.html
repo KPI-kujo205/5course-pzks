@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Паралельне дерево виразу</title>
+<style>
+  :root { --bg: #fafafa; --text: #1c1c1e; --muted: #8e8e93; --line: #e5e5ea; --edge: #c7c7cc; --err: #d70015; color-scheme: light dark; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #131315; --text: #ececf0; --muted: #7d7d85; --line: #2a2a2f; --edge: #48484f; --err: #ff6b7a; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, sans-serif; }
+  main { max-width: 720px; margin: 0 auto; padding: 56px 20px; }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  .row { display: flex; gap: 10px; }
+  input[type=text], select { font: inherit; color: var(--text); background: transparent; border: 1px solid var(--line);
+    border-radius: 8px; padding: 10px 12px; outline: none; }
+  input[type=text] { flex: 1; min-width: 0; font-size: 17px; }
+  input[type=text]:focus, select:focus { border-color: var(--muted); }
+  select { appearance: none; -webkit-appearance: none; width: 150px; font-size: 14px; color: var(--muted); cursor: pointer;
+    padding-right: 30px; background: no-repeat right 12px center / 10px
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238e8e93' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+  select:hover { border-color: var(--muted); }
+  .option { display: inline-flex; gap: 6px; align-items: center; margin-top: 14px; color: var(--muted); font-size: 14px; cursor: pointer; }
+  #metrics { margin: 28px 0 8px; color: var(--muted); font-size: 14px; min-height: 21px; }
+  #metrics b { color: var(--text); font-weight: 500; }
+  #tree { overflow-x: auto; padding-bottom: 8px; }
+  svg { display: block; margin: 0 auto; }
+  .edge { stroke: var(--edge); stroke-width: 1.2; }
+  .pill { fill: var(--bg); stroke: var(--muted); stroke-width: 1.2; }
+  .label { fill: var(--text); font: 14px ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  .label.op { font-size: 13px; }
+  .level { fill: var(--muted); font: 12px ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+  .node { cursor: default; }
+  svg.dimmed .node, svg.dimmed .edge { opacity: 0.18; }
+  svg.dimmed .on { opacity: 1; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { display: flex; gap: 14px; padding: 9px 0; border-top: 1px solid var(--line); }
+  li .pos { color: var(--muted); min-width: 28px; text-align: right; font-size: 14px; padding-top: 1px; }
+  li.zero { color: var(--err); }
+  .ok, .hint, summary { color: var(--muted); }
+  summary { cursor: pointer; font-size: 14px; margin-top: 24px; }
+  summary:hover { color: var(--text); }
+  pre { margin: 12px 0 0; font-size: 13px; white-space: pre-wrap; word-break: break-word; }
+  .hint { margin-top: 32px; font-size: 14px; }
+  .hint a { color: inherit; text-decoration: none; }
+  .hint a:hover { color: var(--text); }
+  .labs { display: flex; gap: 16px; justify-content: flex-end; font-size: 14px; margin-bottom: 24px; }
+  .labs a { color: var(--muted); text-decoration: none; }
+  .labs a:hover, .labs a.current { color: var(--text); }
+</style>
+</head>
+<body>
+<main>
+  <nav class="labs"><a href="../lab1/">Лаб 1</a><a href="../lab2/" class="current">Лаб 2</a></nav>
+  <div class="row">
+    <input id="input" type="text" class="mono" spellcheck="false" autocomplete="off" placeholder="Введіть вираз">
+    <select id="samples" aria-label="Приклади"></select>
+  </div>
+  <label class="option"><input id="simplify" type="checkbox"> спрощення</label>
+  <div id="metrics"></div>
+  <div id="tree"></div>
+  <ul id="problems"></ul>
+  <details id="levels" hidden><summary>яруси</summary><pre id="levelsText" class="mono"></pre></details>
+</main>
+
+<script type="module">
+import { parallelize } from './src/parallelize.js';
+import { SAMPLES } from './src/samples.js';
+import { evaluate, expressionOf } from './src/tree.js';
+import { renderTree, highlightOnHover } from './tree-view.js';
+
+$('input').addEventListener('input', update);
+$('simplify').addEventListener('change', update);
+$('samples').addEventListener('change', pickSample);
+fillSamples();
+$('input').value = SAMPLES.find(({ name }) => name.startsWith('Складний')).expr;
+update();
+
+function $(id) {
+  return document.getElementById(id);
+}
+
+function escapeHtml(text) {
+  return text.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+
+function fillSamples() {
+  const options = SAMPLES.map(({ name }, i) => `<option value="${i}">${name}</option>`);
+  $('samples').innerHTML = `<option value="">Приклади</option>${options.join('')}`;
+}
+
+function pickSample(event) {
+  const index = event.target.value;
+  event.target.value = '';
+  if (index === '') return;
+  $('input').value = SAMPLES[index].expr;
+  $('simplify').checked = SAMPLES[index].simplify;
+  update();
+}
+
+function update() {
+  const source = $('input').value;
+  clearResult();
+  if (!source.trim()) return;
+  const result = parallelize({ source, simplify: $('simplify').checked });
+  if (result.status === 'syntax-errors') showSyntaxErrors(result);
+  else if (result.status === 'division-by-zero') showZeroDivisions(result);
+  else showPlan(result);
+}
+
+function clearResult() {
+  $('metrics').innerHTML = '';
+  $('tree').innerHTML = '';
+  $('problems').innerHTML = '';
+  $('levels').hidden = true;
+}
+
+function showSyntaxErrors({ errors }) {
+  $('problems').innerHTML = errors
+    .map((e) => `<li><span class="pos mono">${e.pos}</span><span>${escapeHtml(e.message)}</span></li>`)
+    .join('');
+}
+
+function showZeroDivisions({ divisions }) {
+  $('problems').innerHTML = divisions
+    .map((d) => `<li class="zero"><span class="pos mono">${d.termNumber}</span><span>ділення на нуль у доданку <span class="mono">${escapeHtml(d.term)}</span>, дільник <span class="mono">${escapeHtml(d.divisor)}</span> дорівнює 0</span></li>`)
+    .join('');
+}
+
+function showPlan({ tree, levels, height, width, operations }) {
+  const value = evaluate({ tree });
+  const valueText = Number.isFinite(value) ? ` · = <b>${Number(value.toPrecision(12))}</b>` : '';
+  $('metrics').innerHTML = `висота <b>${height}</b> · ширина <b>${width}</b> · операцій <b>${operations}</b>${valueText}`;
+  $('tree').innerHTML = renderTree(tree);
+  highlightOnHover({ svg: $('tree').querySelector('svg'), tree });
+  $('levelsText').textContent = levels.map((level, k) => `${k + 1}: ${level.map(expressionOf).join(';  ')}`).join('\n');
+  $('levels').hidden = height === 0;
+}
+</script>
+</body>
+</html>
